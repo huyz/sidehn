@@ -22,22 +22,21 @@ function addHNComments(id) {
     #hn-iframe {
       position: fixed;
       top: 0;
-      right: -30%;
+      right: 0;
       width: 30%;
       height: 100vh;
       border: none;
       z-index: 2147483647;
-      transition: right 0.2s ease;
       pointer-events: auto;
     }
-    #hn-iframe.visible {
-      right: 0;
+    #hn-iframe.hidden {
+      right: -30%;
     }
 
     #hn-toggle {
       position: fixed;
       top: calc(50% - 1.5rem);
-      right: 0;
+      right: 30%;
       height: 3rem;
       width: 1.5rem;
       background: hsla(21, 84%, 55%, 1.00);
@@ -48,7 +47,6 @@ function addHNComments(id) {
       color: black;
       border-radius: 0.5rem 0 0 0.5rem;
       z-index: 2147483647;
-      transition: right 0.2s ease;
       pointer-events: auto;
       font-family: sans-serif;
       display: flex;
@@ -56,14 +54,20 @@ function addHNComments(id) {
       justify-content: center;
       padding: 0;
     }
-    #hn-toggle.visible {
-      right: 30%;
+    #hn-toggle.hidden {
+      right: 0;
+    }
+
+    .transitions #hn-iframe,
+    .transitions #hn-toggle {
+      transition: right 0.2s ease;
     }
 
     @media (max-width: 1023px) {
-      #hn-iframe { width: 85%; right: -85%; }
-      #hn-iframe.visible { right: 0; }
-      #hn-toggle.visible { right: 85%; }
+      #hn-iframe { width: 85%; }
+      #hn-iframe.hidden { right: -85%; }
+      #hn-toggle:not(.hidden) { right: 85%; }
+      #hn-toggle.hidden { right: 0; }
     }
   `;
   shadow.appendChild(style);
@@ -74,46 +78,50 @@ function addHNComments(id) {
   iframe.src = `https://news.ycombinator.com/item?id=${id}`;
   shadow.appendChild(iframe);
 
-  // Toggle button
+  // Wrapper div inside shadow for toggling transitions
+  const wrapper = document.createElement("div");
+  wrapper.appendChild(iframe);
+
+  // Toggle button — starts in visible/expanded state
   const toggle = document.createElement("button");
   toggle.id = "hn-toggle";
-  toggle.textContent = "\u25C2"; // left-pointing chevron (collapsed)
-  shadow.appendChild(toggle);
+  toggle.textContent = "\u25B8"; // right-pointing chevron (expanded)
+  wrapper.appendChild(toggle);
+  shadow.appendChild(wrapper);
 
-  // Inject a <style> into the page to shrink body — the only page-side effect.
-  // Using an ID so we can toggle it without touching the page's own styles.
-  const pageStyle = document.createElement("style");
-  pageStyle.id = "sidehn-page-style";
-  pageStyle.textContent = `
-    html.sidehn-active {
-      margin-right: 30% !important;
-      transition: margin-right 0.2s ease;
-    }
-    @media (max-width: 1023px) {
-      html.sidehn-active {
-        margin-right: 0 !important;
-      }
-    }
-  `;
-  document.head.appendChild(pageStyle);
+  // Start shown on desktop
+  shown = window.innerWidth >= 1024;
+  if (!shown) {
+    iframe.classList.add("hidden");
+    toggle.classList.add("hidden");
+    toggle.textContent = "\u25C2";
+  } else {
+    document.documentElement.classList.add("sidehn-active");
+  }
+
+  function enableTransitions() {
+    wrapper.classList.add("transitions");
+    document.documentElement.classList.add("sidehn-animated");
+  }
 
   function show() {
     shown = true;
-    iframe.classList.add("visible");
-    toggle.classList.add("visible");
-    toggle.textContent = "\u25B8"; // right-pointing chevron (expanded)
+    iframe.classList.remove("hidden");
+    toggle.classList.remove("hidden");
+    toggle.textContent = "\u25B8";
     document.documentElement.classList.add("sidehn-active");
   }
 
   function hide() {
     shown = false;
-    iframe.classList.remove("visible");
-    toggle.classList.remove("visible");
+    iframe.classList.add("hidden");
+    toggle.classList.add("hidden");
     toggle.textContent = "\u25C2";
     document.documentElement.classList.remove("sidehn-active");
   }
 
   toggle.addEventListener("click", () => {
+    enableTransitions(); // transitions kick in from first interaction
     if (shown) {
       hiddenManually = true;
       hide();
@@ -135,8 +143,10 @@ function addHNComments(id) {
   // replacements don't remove it
   document.documentElement.appendChild(host);
 
-  window.addEventListener("resize", autoToggle);
-  autoToggle();
+  window.addEventListener("resize", () => {
+    enableTransitions();
+    autoToggle();
+  });
 }
 
 function addHashIDs() {

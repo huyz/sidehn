@@ -23,6 +23,12 @@
   ],
   "content_scripts": [
     {
+      "matches": ["*://*/*?*hnid=*"],
+      "css": ["sidehn.css"],
+      "js": ["early.js"],
+      "run_at": "document_start"
+    },
+    {
       "matches": ["https://news.ycombinator.com/*", "*://*/*?*hnid=*"],
       "js": ["browser-polyfill.min.js", "script.js"],
       "run_at": "document_end"
