@@ -163,13 +163,9 @@ function addHashIDs() {
       item.querySelector("a.hn-item-title");
     if (!link) return;
     if (!link.href.includes("news.ycombinator.com")) {
-      if (link.href.match(/([?&])hnid=\d+/)) {
-        link.href = link.href.replace(/([?&])hnid=\d+/, `$1hnid=${item.id}`);
-      } else if (link.href.includes("?")) {
-        link.href += `&hnid=${item.id}`;
-      } else {
-        link.href += `?hnid=${item.id}`;
-      }
+      const url = new URL(link.href);
+      url.searchParams.set("hnid", item.id);
+      link.href = url.toString();
     }
   });
 }
