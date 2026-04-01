@@ -185,9 +185,9 @@ async function setup() {
       return;
     }
 
-    const hnidMatch = location.search.match(/[?&]hnid=(\d+)/);
-    if (hnidMatch) {
-      addHNComments(hnidMatch[1]);
+    const hnid = document.documentElement.dataset.sidehnId;
+    if (hnid) {
+      addHNComments(hnid);
     }
     return;
   }

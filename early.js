@@ -1,8 +1,11 @@
-// Runs at document_start (before first paint) to prevent layout flash.
-// Adds the class that triggers the margin-right rule from sidehn.css.
+// Runs at document_start (before first paint) to prevent layout flash
+// and capture the hnid before the page can strip it from the URL.
 (function () {
   var match = location.search.match(/[?&]hnid=(\d+)/);
-  if (match && window.innerWidth >= 1024) {
-    document.documentElement.classList.add("sidehn-active");
+  if (match) {
+    document.documentElement.dataset.sidehnId = match[1];
+    if (window.innerWidth >= 1024) {
+      document.documentElement.classList.add("sidehn-active");
+    }
   }
 })();
