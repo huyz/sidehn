@@ -1,128 +1,143 @@
-window.addHNComments = (id) => {
-  // Create the iframe element
-  if (document.getElementById("hn-iframe")) {
+function addHNComments(id) {
+  // Prevent duplicate injection
+  if (document.querySelector("sidehn-host")) {
     return;
   }
+
+  // State — kept in closure, not on window
+  let shown = false;
+  let hiddenManually = false;
+
+  // Create a custom-element host and attach a closed shadow root.
+  // Closed mode means the page cannot access shadowRoot at all.
+  const host = document.createElement("sidehn-host");
+  host.style.cssText = "all:initial; position:fixed; top:0; right:0; z-index:2147483647; width:0; height:0; pointer-events:none;";
+  const shadow = host.attachShadow({ mode: "closed" });
+
+  // Inject styles into the shadow — completely isolated from the page
+  const style = document.createElement("style");
+  style.textContent = `
+    :host { all: initial; }
+
+    #hn-iframe {
+      position: fixed;
+      top: 0;
+      right: -30%;
+      width: 30%;
+      height: 100vh;
+      border: none;
+      z-index: 2147483647;
+      transition: right 0.2s ease;
+      pointer-events: auto;
+    }
+    #hn-iframe.visible {
+      right: 0;
+    }
+
+    #hn-toggle {
+      position: fixed;
+      top: calc(50% - 1.5rem);
+      right: 0;
+      height: 3rem;
+      width: 1.5rem;
+      background: hsla(21, 84%, 55%, 1.00);
+      font-size: 1.5rem;
+      cursor: pointer;
+      outline: none;
+      border: none;
+      color: black;
+      border-radius: 0.5rem 0 0 0.5rem;
+      z-index: 2147483647;
+      transition: right 0.2s ease;
+      pointer-events: auto;
+      font-family: sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+    #hn-toggle.visible {
+      right: 30%;
+    }
+
+    @media (max-width: 1023px) {
+      #hn-iframe { width: 85%; right: -85%; }
+      #hn-iframe.visible { right: 0; }
+      #hn-toggle.visible { right: 85%; }
+    }
+  `;
+  shadow.appendChild(style);
+
+  // Iframe
   const iframe = document.createElement("iframe");
   iframe.id = "hn-iframe";
-  const bodyStyle = getComputedStyle(document.body);
-
-  // Set the source of the iframe to the Hacker News comments page for the given URL
   iframe.src = `https://news.ycombinator.com/item?id=${id}`;
+  shadow.appendChild(iframe);
 
-  // Set the width and height of the iframe
-  iframe.style.width = "30%";
-  iframe.style.minWidth = "30%";
-  iframe.style.maxWidth = "30%";
-  iframe.style.height = "100%";
-  iframe.style.position = "fixed";
-  iframe.style.top = "0";
-  iframe.style.right = "-30%";
-  iframe.style.zIndex = 1000;
+  // Toggle button
+  const toggle = document.createElement("button");
+  toggle.id = "hn-toggle";
+  toggle.textContent = "\u25C2"; // left-pointing chevron (collapsed)
+  shadow.appendChild(toggle);
 
-  // Create the close button (a right chevron placed on the left side of the iframe)
-  const closeButton = document.createElement("button");
-  closeButton.innerHTML = window.innerWidth >= 1024 ? "&#9656;" : "&#9666;";
-  closeButton.style.position = "fixed";
-  closeButton.style.top = "calc(50% - 3rem)";
-  closeButton.style.right = "0";
-  closeButton.style.height = "3rem";
-  closeButton.style.width = "1.5rem";
-  closeButton.style.backgroundColor = "hsla(21, 84%, 55%, 1.00)";
-  closeButton.style.fontSize = "1.5rem";
-  closeButton.style.cursor = "pointer";
-  closeButton.style.outline = "none";
-  closeButton.style.color = "black";
-  closeButton.style.borderRadius = "0.5rem 0 0 0.5rem";
-  closeButton.style.zIndex = 1001;
+  // Inject a <style> into the page to shrink body — the only page-side effect.
+  // Using an ID so we can toggle it without touching the page's own styles.
+  const pageStyle = document.createElement("style");
+  pageStyle.id = "sidehn-page-style";
+  pageStyle.textContent = `
+    html.sidehn-active {
+      margin-right: 30% !important;
+      transition: margin-right 0.2s ease;
+    }
+    @media (max-width: 1023px) {
+      html.sidehn-active {
+        margin-right: 0 !important;
+      }
+    }
+  `;
+  document.head.appendChild(pageStyle);
 
-  window.hnIframeHiddenManually = false;
-  closeButton.addEventListener("click", () => {
-    if (window.hnIframeShown) {
-      window.hnIframeHiddenManually = true;
-      window.hideHNComments();
+  function show() {
+    shown = true;
+    iframe.classList.add("visible");
+    toggle.classList.add("visible");
+    toggle.textContent = "\u25B8"; // right-pointing chevron (expanded)
+    document.documentElement.classList.add("sidehn-active");
+  }
+
+  function hide() {
+    shown = false;
+    iframe.classList.remove("visible");
+    toggle.classList.remove("visible");
+    toggle.textContent = "\u25C2";
+    document.documentElement.classList.remove("sidehn-active");
+  }
+
+  toggle.addEventListener("click", () => {
+    if (shown) {
+      hiddenManually = true;
+      hide();
     } else {
-      window.hnIframeHiddenManually = false;
-      window.showHNComments();
+      hiddenManually = false;
+      show();
     }
   });
 
-  window.hideHNComments = () => {
-    iframe.style.right = "-30%";
-    closeButton.innerHTML = "&#9666;";
-    document.getElementById("hn-iframe-placeholder").style.display = "none";
-
-    const bodyContainer = document.getElementById("hn-body-container");
-    bodyContainer.style.maxWidth = "100%";
-    bodyContainer.style.width = "100%";
-    bodyContainer.style.flex = 1;
-    window.hnIframeShown = false;
-  };
-
-  window.showHNComments = () => {
-    iframe.style.right = "0";
-    closeButton.innerHTML = "&#9656;";
-    document.getElementById("hn-iframe-placeholder").style.display = "block";
-
-    const bodyContainer = document.getElementById("hn-body-container");
-    bodyContainer.style.maxWidth = "70%";
-    bodyContainer.style.width = `calc(70% - ${bodyStyle.padding || 0})`;
-    bodyContainer.style.flex = 0.7;
-    window.hnIframeShown = true;
-  };
-
-  // Create a flex container to hold the website contents and the iframe
-  const flexContainer = document.createElement("div");
-  flexContainer.id = "hn-flex-container";
-  flexContainer.style.display = "flex";
-
-  // Container for holding the body contents
-  const bodyContainer = document.createElement("div");
-  bodyContainer.id = "hn-body-container";
-  bodyContainer.style.flexGrow = 0.7;
-  bodyContainer.style.width = `calc(70% - ${bodyStyle.padding || 0})`;
-  bodyContainer.style.minWidth = "50%";
-  bodyContainer.style.maxWidth = "70%";
-  bodyContainer.style.margin = bodyStyle.margin;
-  bodyContainer.style.padding = bodyStyle.padding;
-  bodyContainer.innerHTML = document.body.innerHTML;
-  flexContainer.innerHTML = bodyContainer.outerHTML;
-
-  // Create a placeholder for the iframe that will be 30% of the flex container
-  // to push body contents to the left of the sidebar
-  const iframePlaceholder = document.createElement("div");
-  iframePlaceholder.id = "hn-iframe-placeholder";
-  iframePlaceholder.style.width = "30%";
-  iframePlaceholder.style.minWidth = "30%";
-  iframePlaceholder.style.maxWidth = "30%";
-  iframePlaceholder.style.height = "100vh";
-  iframePlaceholder.style.flex = 0.3;
-  iframePlaceholder.style.backgroundColor = "hsla(60, 25%, 95%, 1.00)";
-
-  flexContainer.appendChild(iframePlaceholder);
-  document.body.innerHTML = flexContainer.outerHTML;
-  document.body.appendChild(iframe);
-  document.body.appendChild(closeButton);
-  document.body.style.margin = 0;
-  document.body.style.padding = 0;
-  document.body.style.width = "100%";
-  document.body.style.minWidth = "100%";
-  document.body.style.maxWidth = "100%";
-
-  // Show/hide the iframe based on the width of the page
-  function toggleIframe() {
+  function autoToggle() {
     if (window.innerWidth < 1024) {
-      window.hideHNComments();
-    } else if (!window.hnIframeHiddenManually) {
-      window.showHNComments();
+      hide();
+    } else if (!hiddenManually) {
+      show();
     }
   }
 
-  // Call toggleIframe on page load and on window resize
-  window.addEventListener("load", toggleIframe);
-  window.addEventListener("resize", toggleIframe);
-  toggleIframe();
-};
+  // Append the shadow host to documentElement (not body) so SPA body
+  // replacements don't remove it
+  document.documentElement.appendChild(host);
+
+  window.addEventListener("resize", autoToggle);
+  autoToggle();
+}
 
 function addHashIDs() {
   var hnItems = document.querySelectorAll("tr.athing");
