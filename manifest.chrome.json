@@ -31,7 +31,8 @@
     {
       "matches": ["https://news.ycombinator.com/*", "*://*/*?*hnid=*"],
       "js": ["browser-polyfill.min.js", "script.js"],
-      "run_at": "document_end"
+      "run_at": "document_end",
+      "all_frames": true
     }
   ],
   "minimum_chrome_version": "102.0",

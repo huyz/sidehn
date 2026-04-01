@@ -190,6 +190,14 @@ async function setup() {
     return;
   }
 
+  // Match the page background to #hnmain's bgcolor so the full
+  // sidebar area is filled, even when the page content is short.
+  const hnmain = document.getElementById("hnmain");
+  if (hnmain) {
+    document.documentElement.style.backgroundColor =
+      hnmain.getAttribute("bgcolor") || "#f6f6ef";
+  }
+
   const observer = new MutationObserver(addHashIDs);
   observer.observe(document.body, {
     childList: true,
