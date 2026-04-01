@@ -175,13 +175,13 @@ async function setup() {
 
     const hnidMatch = location.search.match(/[?&]hnid=(\d+)/);
     if (hnidMatch) {
-      window.addHNComments(hnidMatch[1]);
+      addHNComments(hnidMatch[1]);
     }
     return;
   }
 
-  window.hnObserver = new MutationObserver(addHashIDs);
-  window.hnObserver.observe(document.body, {
+  const observer = new MutationObserver(addHashIDs);
+  observer.observe(document.body, {
     childList: true,
     subtree: true,
   });
