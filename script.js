@@ -11,7 +11,7 @@ function addHNComments(id) {
   // Create a custom-element host and attach a closed shadow root.
   // Closed mode means the page cannot access shadowRoot at all.
   const host = document.createElement("sidehn-host");
-  host.style.cssText = "all:initial; position:fixed; top:0; right:0; z-index:2147483647; width:0; height:0; pointer-events:none;";
+  host.style.cssText = "position:fixed; top:0; right:0; z-index:2147483647; width:0; height:0; pointer-events:none; display:block;";
   const shadow = host.attachShadow({ mode: "closed" });
 
   // Inject styles into the shadow — completely isolated from the page
@@ -26,6 +26,7 @@ function addHNComments(id) {
       width: 30%;
       height: 100vh;
       border: none;
+      border-left: 1px solid rgba(0, 0, 0, 0.12);
       z-index: 2147483647;
       pointer-events: auto;
     }
@@ -160,6 +161,7 @@ function addHashIDs() {
     const link =
       item.querySelector("span.titleline > a") ||
       item.querySelector("a.hn-item-title");
+    if (!link) return;
     if (!link.href.includes("news.ycombinator.com")) {
       if (link.href.match(/([?&])hnid=\d+/)) {
         link.href = link.href.replace(/([?&])hnid=\d+/, `$1hnid=${item.id}`);
