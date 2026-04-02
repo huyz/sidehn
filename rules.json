@@ -46,5 +46,42 @@
     "condition": {
       "urlFilter": "||news.ycombinator.com"
     }
+  },
+  {
+    "id": 4,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        {
+          "operation": "remove",
+          "header": "Content-Security-Policy"
+        },
+        {
+          "operation": "remove",
+          "header": "X-Frame-Options"
+        },
+        {
+          "operation": "remove",
+          "header": "Frame-Options"
+        },
+        {
+          "operation": "remove",
+          "header": "Cross-Origin-Embedder-Policy"
+        },
+        {
+          "operation": "remove",
+          "header": "Cross-Origin-Opener-Policy"
+        },
+        {
+          "operation": "remove",
+          "header": "Cross-Origin-Resource-Policy"
+        }
+      ]
+    },
+    "condition": {
+      "urlFilter": "hnid=",
+      "resourceTypes": ["main_frame"]
+    }
   }
 ]

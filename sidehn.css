@@ -1,0 +1,11 @@
+html.sidehn-active {
+  margin-right: 30% !important;
+}
+html.sidehn-animated {
+  transition: margin-right 0.2s ease;
+}
+@media (max-width: 1023px) {
+  html.sidehn-active {
+    margin-right: 0 !important;
+  }
+}
